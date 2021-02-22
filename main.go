@@ -5,154 +5,184 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
+	"time"
+
+	"gopkg.in/yaml.v2"
 )
 
+var configpath string = "./config.yml"
 var basepath string = "./alerts/"
+var meta metaData
+var config conf
+var now string = time.Now().Format("2006-01-02 15:04:05")
 
-type alertGroup struct {
-	alertGroupName string
-	AlertGroupPath []os.FileInfo
+// MetaData holds meta informatiob about an alert. For internal processing only. Data gets persistet in .meta.yml
+type metaData struct {
+	Version   int64
+	Alertname string
+	Groupname string
+	ModTime   string
 }
 
-type alert struct {
-	alertName      string
-	alertPath      []os.FileInfo
-	alertGroupInfo alertGroup
+func getMetaData(filename string) (*metaData, error) {
+	buf, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	c := &metaData{}
+	err = yaml.Unmarshal(buf, c)
+	if err != nil {
+		return nil, fmt.Errorf("in file %q: %v", filename, err)
+	}
+	return c, nil
+}
+func (m metaData) getVersion(metapath string) (version int64) {
+	md, err := getMetaData(metapath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return md.Version
+}
+func (m metaData) getAlertname(metapath string) (alertname string) {
+	md, err := getMetaData(metapath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return md.Alertname
+}
+func (m metaData) getAlertGroupName(metapath string) (alertgroupname string) {
+	md, err := getMetaData(metapath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return md.Groupname
 }
 
-// Logger provides a simple log interface
+// updateVersion can be used to set a version number
+// or by giving `0` as version it autoincrements
+func (m metaData) updateVersion(filename string, version int64) {
+	if version == 0 {
+		version = meta.getVersion(filename) + 1
+	}
+	data := metaData{
+		Version:   version,
+		Alertname: meta.getAlertname(filename),
+		Groupname: meta.getAlertGroupName(filename),
+		ModTime:   now,
+	}
+	file, _ := yaml.Marshal(data)
+	_ = ioutil.WriteFile(filename, file, 0666)
+}
+func (m metaData) setAlertName(filename string, alertname string) {
+	data := metaData{
+		Version:   meta.getVersion(filename),
+		Alertname: alertname,
+		Groupname: meta.getAlertGroupName(filename),
+		ModTime:   "",
+	}
+	file, _ := yaml.Marshal(data)
+	_ = ioutil.WriteFile(filename, file, 0666)
+}
+func (m metaData) setAlertGroupName(filename string, alertgroupname string) {
+	data := metaData{
+		Version:   meta.getVersion(filename),
+		Alertname: "",
+		Groupname: "",
+		ModTime:   "",
+	}
+	data.Version = meta.getVersion(filename)
+	data.Alertname = meta.getAlertname(filename)
+	data.Groupname = alertgroupname
+	file, _ := yaml.Marshal(data)
+	_ = ioutil.WriteFile(filename, file, 0666)
+}
+
+type conf struct {
+	Conflunece struct {
+		ConfluenceAPIKey   string `yaml:"confluence_api_key,omitempty"`
+		ConfluenceSpaceKey string `yaml:"confluence_space_key,omitempty"`
+		ConfluenceDomain   string `yaml:"confluence_domain,omitempty"`
+		ModTime            string `yaml:"mod_time,omitempty"`
+	} `yaml:"conflunece,omitempty"`
+	Grafana struct {
+		GrafanaDomain string `yaml:"grafana_domain,omitempty"`
+		GrafanaAPIKey string `yaml:"grafama_api_key,omitempty"`
+	} `yaml:"grafana,omitempty"`
+}
+
+func getConf(filename string) (*conf, error) {
+	buf, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	c := &conf{}
+	err = yaml.Unmarshal(buf, c)
+	if err != nil {
+		return nil, fmt.Errorf("in file %q: %v", filename, err)
+	}
+
+	return c, nil
+}
+func (c conf) getConfluenceAPIKey() (confluenceapikey string) {
+	cd, err := getConf(configpath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return cd.Conflunece.ConfluenceAPIKey
+}
+func (c conf) getConfluenceSpaceKey() (confluencespacekey string) {
+	cd, err := getConf(configpath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return cd.Conflunece.ConfluenceSpaceKey
+}
+func (c conf) getConfluenceDomain() (confluencedomain string) {
+	cd, err := getConf(configpath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return cd.Conflunece.ConfluenceDomain
+}
+func (c conf) getGrafanaDoamin() (grafanadomain string) {
+	cd, err := getConf(configpath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return cd.Grafana.GrafanaDomain
+}
+func (c conf) getGrafanaAPIKey() (grafanaapikey string) {
+	cd, err := getConf(configpath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return cd.Grafana.GrafanaAPIKey
+}
+
+// Logger provides a simple log interface. It logs to file `log.log`,
+// on ERROR it exits after printing the provided message
 func Logger(level string, message string) {
+	var logline string = now + " " + level + " " + message
+	fmt.Println(logline)
 	if level == "ERROR" || level == "error" {
-		log.Fatalf("%v %v", level, message)
+		os.Exit(1)
 	}
-	log.Printf("%v %v", level, message)
-}
-
-func printAlertGroups() {
-	for _, a := range getAlertGroups() {
-		if a.IsDir() {
-			fmt.Println(path.Base(a.Name()))
-			Logger("INFO", a.Name())
-			fmt.Println(a.Name())
-		}
-
-	}
-}
-
-func getAlertGroups(groups []os.FileInfo) {
-	groups, err := ioutil.ReadDir(basepath)
+	f, err := os.OpenFile("log.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
+		log.Fatalln(err)
+	}
+	defer f.Close()
+	if _, err := f.WriteString(logline + "\n"); err != nil {
 		log.Fatal(err)
-	}
-	if len(groups) == 0 {
-		Logger("ERROR", "no alert folders found")
-	}
-	println(groups)
-	//ag.alertGroupName = string(groups)
-	//return ag.alertGroupName
-}
-
-func printAlerts() {
-	for _, a := range getAlerts() {
-		if a.IsDir() {
-			Logger("INFO", a.Name())
-			fmt.Println(path.Base(a.Name()))
-
-		}
-	}
-}
-
-func getAlerts() (alerts []os.FileInfo) {
-	for _, g := range getAlertGroups() {
-		if g.IsDir() {
-			groupPath := path.Join(basepath, g.Name())
-			println(groupPath)
-			alerts, err := ioutil.ReadDir(groupPath)
-			for _, A := range alerts {
-				if A.IsDir() {
-					if A.Name() == groupPath {
-						println(path.Join(groupPath, string(a.Name())))
-					}
-				}
-			}
-			if err != nil {
-				log.Fatal(err)
-			}
-			if len(alerts) == 0 {
-				Logger("INFO", "no alert folders found")
-
-			}
-
-		}
-
-	}
-	return alerts
-}
-
-func createTemplate() {
-	basepath = "./alerts/general/template"
-	_, err := os.Stat(basepath)
-	if _, err := os.Stat(basepath); !os.IsNotExist(err) {
-		Logger("ERROR", "Template already exists at "+basepath)
-	}
-	if err != nil {
-		println(err)
-		if os.IsExist(err) {
-			Logger("ERROR", basepath+" already exists/nexitting...")
-		}
-		if os.IsNotExist(err) {
-			os.MkdirAll(basepath, 0700)
-			Logger("INFO", basepath+" created.")
-		}
-		os.Create(basepath + "/rule.yaml")
-		Logger("INFO", "rulefile created.")
-		os.Create(basepath + "/readme.md")
-		Logger("INFO", "readme created.")
-		os.Create(basepath + "/confluence.json")
-		Logger("INFO", "confluence page created.")
-		if !os.IsNotExist(err) {
-			Logger("ERROR", "Something is really wrong")
-		}
-	}
-	Logger("INFO", "Template created at "+basepath)
-}
-
-func validateFSstucture() {
-	_, err := os.Stat(basepath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			Logger("WARN", "Main Alerts directory does not exist!")
-			fmt.Println("Want to create it? [y/(n)]")
-			var b []byte = make([]byte, 1)
-			os.Stdin.Read(b)
-			if string(b) == "y" {
-				os.MkdirAll(basepath, 0700)
-				validateFSstucture()
-			}
-			Logger("INFO", "exiting...")
-			return
-		}
-		if !os.IsNotExist(err) {
-			Logger("ERROR", "Something is really wrong")
-		}
-	}
-	groups, err := ioutil.ReadDir(basepath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if len(groups) == 0 {
-		Logger("INFO", "no alert folders found")
-	}
-	for _, a := range groups {
-		if a.IsDir() {
-			Logger("INFO", a.Name())
-		}
 	}
 }
 
 func main() {
-	//createTemplate()
-	getAlertGroups()
-	//	validateFSstucture()
+	// Logger("ERROR", "BLA")
+	fmt.Println(meta.getVersion("meta.yml"))
+	fmt.Println(config.getConfluenceAPIKey())
+	Logger("INFO", "TEST")
+	meta.updateVersion("meta.yml", 1)
+	fmt.Println(meta.getVersion("meta.yml"))
 }
