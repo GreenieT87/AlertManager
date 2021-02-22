@@ -12,12 +12,12 @@ var basepath string = "./alerts/"
 
 type alertGroup struct {
 	alertGroupName string
-	AlertGroupPath []os.FileInfo
+	AlertGroupPath string
 }
 
 type alert struct {
 	alertName      string
-	alertPath      []os.FileInfo
+	alertPath      string
 	alertGroupInfo alertGroup
 }
 
@@ -29,18 +29,36 @@ func Logger(level string, message string) {
 	log.Printf("%v %v", level, message)
 }
 
-func printAlertGroups() {
-	for _, a := range getAlertGroups() {
-		if a.IsDir() {
-			fmt.Println(path.Base(a.Name()))
-			Logger("INFO", a.Name())
-			fmt.Println(a.Name())
-		}
-
-	}
+func (ag alertGroup) printAlertGroup() {
+	Logger("INFO", string(ag.alertGroupName))
 }
 
-func getAlertGroups(groups []os.FileInfo) {
+func (al alert) printAlert() {
+	// Logger("INFO", "Alertname: "+al.alertName+" Path: "+al.alertPath+" Groupname: "+al.alertGroupInfo.alertGroupName)
+	fmt.Printf(`
+	Alertname:      %v 
+	AlertPath:      %v
+	AlertGroupName: %v
+	AlertGroupPath: %v
+	`, al.alertName, al.alertPath, al.alertGroupInfo.alertGroupName, al.alertGroupInfo.AlertGroupPath)
+}
+
+// func (agi alertGroup) getAlertGroups() (ag alert) {
+// 	groups, err := ioutil.ReadDir(basepath)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	if len(groups) == 0 {
+// 		Logger("ERROR", "no alert folders found")
+// 	}
+// 	for _, g := range groups {
+// 		// println(g.Name())
+// 		agi := alertGroup{alertGroupName: g.Name()}
+// 	}
+// 	return ag
+// }
+
+func printAlerts() {
 	groups, err := ioutil.ReadDir(basepath)
 	if err != nil {
 		log.Fatal(err)
@@ -48,46 +66,33 @@ func getAlertGroups(groups []os.FileInfo) {
 	if len(groups) == 0 {
 		Logger("ERROR", "no alert folders found")
 	}
-	println(groups)
-	//ag.alertGroupName = string(groups)
-	//return ag.alertGroupName
-}
+	for _, g := range groups {
+		// println(g.Name())
+		ag := &alertGroup{
+			alertGroupName: g.Name(),
+		}
+		// ag.printAlertGroup()
 
-func printAlerts() {
-	for _, a := range getAlerts() {
-		if a.IsDir() {
-			Logger("INFO", a.Name())
-			fmt.Println(path.Base(a.Name()))
-
+		alerts, err := ioutil.ReadDir(basepath + ag.alertGroupName)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if len(alerts) == 0 {
+			Logger("ERROR", "no alert folders found")
+		}
+		for _, a := range alerts {
+			// println(g.Name())
+			Al := &alert{
+				alertName: a.Name(),
+				alertPath: path.Join(basepath, ag.alertGroupName, a.Name()),
+				alertGroupInfo: alertGroup{
+					alertGroupName: ag.alertGroupName,
+					AlertGroupPath: path.Join(basepath, ag.alertGroupName),
+				},
+			}
+			Al.printAlert()
 		}
 	}
-}
-
-func getAlerts() (alerts []os.FileInfo) {
-	for _, g := range getAlertGroups() {
-		if g.IsDir() {
-			groupPath := path.Join(basepath, g.Name())
-			println(groupPath)
-			alerts, err := ioutil.ReadDir(groupPath)
-			for _, A := range alerts {
-				if A.IsDir() {
-					if A.Name() == groupPath {
-						println(path.Join(groupPath, string(a.Name())))
-					}
-				}
-			}
-			if err != nil {
-				log.Fatal(err)
-			}
-			if len(alerts) == 0 {
-				Logger("INFO", "no alert folders found")
-
-			}
-
-		}
-
-	}
-	return alerts
 }
 
 func createTemplate() {
@@ -152,7 +157,6 @@ func validateFSstucture() {
 }
 
 func main() {
-	//createTemplate()
-	getAlertGroups()
-	//	validateFSstucture()
+	printAlerts()
+	al.AlertPath
 }
