@@ -10,7 +10,7 @@ The folder structre looks like this:
                              readme.md  
 ```
 
-## .meta.yaml
+## `.meta.yaml`
 Contains meta information about the alert. Do not touch this  
  like: 
  - last published version(should check if a updated version on confluence exists, throw warn dont change confluence)
@@ -18,7 +18,7 @@ Contains meta information about the alert. Do not touch this
  - groupname
  - mod time(FUN)
 
-## rule.yaml
+## `rule.yaml`
 Typical prometheus rules format
 - title
 - expr 
