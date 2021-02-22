@@ -11,6 +11,7 @@ import (
 )
 
 var configpath string = "./config.yml"
+var logpath string = "./STUFF/"
 var basepath string = "./alerts/"
 var meta metaData
 var config conf
@@ -168,7 +169,7 @@ func Logger(level string, message string) {
 	if level == "ERROR" || level == "error" {
 		os.Exit(1)
 	}
-	f, err := os.OpenFile("log.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(logpath+"log.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatalln(err)
 	}
