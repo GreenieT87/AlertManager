@@ -5,11 +5,13 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"time"
 
 	"gopkg.in/yaml.v2"
 )
 
+// TODO: put path vars in config.yml
 var configpath string = "./config.yml"
 var logpath string = "./STUFF/"
 var basepath string = "./alerts/"
@@ -17,7 +19,7 @@ var meta metaData
 var config conf
 var now string = time.Now().Format("2006-01-02 15:04:05")
 
-// MetaData holds meta informatiob about an alert. For internal processing only. Data gets persistet in .meta.yml
+// MetaData holds meta informatiob about an alert. For internal processing only. Data gets persisted in .meta.yml
 type metaData struct {
 	Version   int64
 	Alertname string
@@ -28,6 +30,9 @@ type metaData struct {
 func getMetaData(filename string) (*metaData, error) {
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
+		if os.IsNotExist(err) {
+			Logger("ERROR", "no Meta file")
+		}
 		return nil, err
 	}
 	c := &metaData{}
@@ -57,6 +62,13 @@ func (m metaData) getAlertGroupName(metapath string) (alertgroupname string) {
 		log.Fatal(err)
 	}
 	return md.Groupname
+}
+func (m metaData) getModTime(metapath string) (modtime string) {
+	md, err := getMetaData(metapath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return md.ModTime
 }
 
 // updateVersion can be used to set a version number
@@ -98,6 +110,17 @@ func (m metaData) setAlertGroupName(filename string, alertgroupname string) {
 	_ = ioutil.WriteFile(filename, file, 0666)
 }
 
+func (m metaData) setModTime(filename string) {
+	data := metaData{
+		Version:   meta.getVersion(filename),
+		Alertname: meta.getAlertname(filename),
+		Groupname: meta.getAlertGroupName(filename),
+		ModTime:   now,
+	}
+	file, _ := yaml.Marshal(data)
+	_ = ioutil.WriteFile(filename, file, 0666)
+}
+
 type conf struct {
 	Conflunece struct {
 		ConfluenceAPIKey   string `yaml:"confluence_api_key,omitempty"`
@@ -130,6 +153,9 @@ func (c conf) getConfluenceAPIKey() (confluenceapikey string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// if cd.Conflunece.ConfluenceAPIKey == "" {
+	// Logger("ERROR", "no api key found in config")
+	// }
 	return cd.Conflunece.ConfluenceAPIKey
 }
 func (c conf) getConfluenceSpaceKey() (confluencespacekey string) {
@@ -179,11 +205,38 @@ func Logger(level string, message string) {
 	}
 }
 
+func init() {
+	_, err := os.Stat(configpath)
+	if os.IsNotExist(err) {
+		fmt.Println("Config file missing")
+		os.Exit(1)
+	}
+	fmt.Println("All good")
+}
+
 func main() {
+	groups, _ := ioutil.ReadDir("./alerts")
+	for _, g := range groups {
+		if g.IsDir() {
+			alerts, _ := ioutil.ReadDir(path.Join("./alerts", g.Name()))
+			for _, a := range alerts {
+				if a.IsDir() {
+					fmt.Println(path.Join(g.Name(), a.Name()))
+				}
+			}
+		}
+	}
+
 	// Logger("ERROR", "BLA")
-	fmt.Println(meta.getVersion("meta.yml"))
-	fmt.Println(config.getConfluenceAPIKey())
-	Logger("INFO", "TEST")
-	meta.updateVersion("meta.yml", 1)
-	fmt.Println(meta.getVersion("meta.yml"))
+	fmt.Println(meta.getVersion("STUFF/meta.yml"))
+	// fmt.Println(config.getConfluenceAPIKey())
+	// Logger("INFO", "TEST")
+	// meta.updateVersion("STUFF/meta.yml", 1)
+	// fmt.Println(meta.getVersion("STUFF/meta.yml"))
+	file, _ := os.Stat("STUFF/meta.yml")
+	meta.setModTime("STUFF/meta.yml")
+	if meta.getModTime("STUFF/meta.yml") < file.ModTime().Format("2006-01-02 15:04:05") {
+		Logger("WARN", "Manual changes of meta file detected")
+	}
+	fmt.Println(file.ModTime().Format("2006-01-02 15:04:05"))
 }
