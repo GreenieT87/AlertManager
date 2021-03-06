@@ -11,7 +11,7 @@ import (
 )
 
 type metaData struct {
-	Version   int64
+	Version   int
 	Alertname string
 	Groupname string
 	ModTime   string
@@ -34,7 +34,7 @@ func getMetaData(filename string) (*metaData, error) {
 	}
 	return c, nil
 }
-func (m metaData) getVersion(metapath string) (version int64) {
+func (m metaData) getVersion(metapath string) (version int) {
 	md, err := getMetaData(metapath)
 	if err != nil {
 		log.Fatal(err)
@@ -79,7 +79,7 @@ func (m metaData) getConfDocID(metapath string) (confdocid int) {
 
 // updateVersion can be used to set a version number
 // or by giving `0` as version it autoincrements
-func (m metaData) updateVersion(filename string, version int64) {
+func (m metaData) updateVersion(filename string, version int) {
 	if version == 0 {
 		version = meta.getVersion(filename) + 1
 	}

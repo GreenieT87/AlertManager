@@ -1,5 +1,6 @@
-version: 0
 alertname: 
 groupname: 
+version: 0
+confdocid: 0
 modtime: 
 created: 

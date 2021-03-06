@@ -1,0 +1,7 @@
+conflunece:
+  confluence_api_key: 
+  confluence_space_key: 
+  confluence_domain: 
+grafana:
+  grafana_domain:
+  grafama_api_key:

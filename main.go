@@ -53,43 +53,49 @@ func init() {
 
 func main() {
 	groups, _ := ioutil.ReadDir(basepath)
-	var conf conf
+
 	for _, g := range groups {
 		if g.IsDir() {
 			fmt.Println("Group:" + g.Name())
 			alerts, _ := ioutil.ReadDir(path.Join(basepath, g.Name()))
+
 			for _, a := range alerts {
 				if a.IsDir() {
+					fmt.Println(a.Name())
 					metapath := path.Join(basepath, g.Name(), a.Name()) + "/.meta.yml"
-					var domain string = conf.getConfluenceDomain()
-					url := fmt.Sprintf("%v/wiki/rest/api/content/%d?expand=version.number", domain, meta.getConfDocID(metapath))
-					fmt.Println(url)
+					// var confDocID = meta.getConfDocID(metapath)
+					file, _ := os.Stat(metapath)
+					if meta.getModTime(metapath) < file.ModTime().Format("2006-01-02 15:04:05") {
+						Logger("WARN", "Manual changes of meta "+metapath+" file detected")
+						Logger("WARN", meta.getModTime(metapath)+" < "+file.ModTime().Format("2006-01-02 15:04:05"))
+
+						break
+					}
+					Logger("WARN", meta.getModTime(metapath)+" < "+file.ModTime().Format("2006-01-02 15:04:05"))
+					
+					if meta.getVersion(metapath) != conflunece.getVersionbyID(meta.getConfDocID(metapath)) {
+						meta.updateVersion(metapath, conflunece.getVersionbyID(meta.getConfDocID(metapath)))
+						meta.setModTime(metapath)
+					}
+					if meta.getAlertname(metapath) != a.Name() {
+						meta.setAlertName(metapath, a.Name())
+						meta.setModTime(metapath)
+					}
+					if meta.getAlertGroupName(metapath) != g.Name() {
+						meta.setAlertGroupName(metapath, g.Name())
+						meta.setModTime(metapath)
+					}
+					
+					fmt.Println(conflunece.getBodybyID(meta.getConfDocID(metapath)))
+					josnpath := path.Join(basepath, g.Name(), a.Name()) + "/.conflunece.json"
+					ioutil.WriteFile(josnpath, []byte(conflunece.getJsonbyID(meta.getConfDocID(metapath))), 0777)
+					
 				}
 			}
 		}
 	}
-	// conflunece.update()
-
-	// var domain = conf.getConfluenceDomain
-	// var docID = meta.getConfDocID
-	// fmt.Printf("%v/wiki/rest/api/content/%d?expand=version.number", conf.getConfluenceDomain(), meta.getConfDocID())
-
-	// url := "https://tafmobile.atlassian.net/wiki/rest/api/content/2388721698?expand=version.number,body.storage,space"
 
 	x0 := conflunece.getVersionbyID(2388721698)
 	var ver = x0
 	fmt.Printf("version %d", ver)
-
-	// Logger("ERROR", "BLA")
-	// fmt.Println(meta.getVersion("STUFF/meta.yml"))
-	// fmt.Println(config.getConfluenceAPIKey())
-	// Logger("INFO", "TEST")
-	// meta.updateVersion("STUFF/meta.yml", 1)
-	// fmt.Println(meta.getVersion("STUFF/meta.yml"))
-	// file, _ := os.Stat("STUFF/meta.yml")
-	// meta.setModTime("STUFF/meta.yml")
-	// if meta.getModTime("STUFF/meta.yml") < file.ModTime().Format("2006-01-02 15:04:05") {
-	// Logger("WARN", "Manual changes of meta file detected")
-	// }
-	// fmt.Println(file.ModTime().Format("2006-01-02 15:04:05"))
 }

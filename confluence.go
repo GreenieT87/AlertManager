@@ -133,7 +133,7 @@ func (c ConfluneceDoc) update() {
 	// var domain = conf.getConfluenceDomain()
 	// var docID = meta.getConfDocID()
 
-	url := domain+"/wiki/rest/api/content/2388721698?expand=version.number,body.storage,space"
+	url := domain + "/wiki/rest/api/content/2388721698?expand=version.number,body.storage,space"
 	method := "GET"
 
 	client := &http.Client{}
@@ -167,6 +167,10 @@ func (c ConfluneceDoc) update() {
 
 func (c ConfluneceDoc) getVersionbyID(ID int) (version int) {
 
+	if ID == 0 {
+		return
+	}
+
 	url := fmt.Sprintf("https://tafmobile.atlassian.net/wiki/rest/api/content/%d?expand=version.number", ID)
 	method := "GET"
 	// fmt.Println(url) // debug line
@@ -179,7 +183,7 @@ func (c ConfluneceDoc) getVersionbyID(ID int) (version int) {
 	}
 
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Basic "+key) 
+	req.Header.Add("Authorization", "Basic "+key)
 	req.Header.Add("Cookie", "JSESSIONID=BEBEEA2BBE754C2EE6163D7E95A71B6E; atlassian.xsrf.token=B0YG-UIL8-KTON-RQPS_d1725762d46de319d4d08160cafa0cae140fa2ed_lout")
 
 	res, err := client.Do(req)
@@ -199,4 +203,84 @@ func (c ConfluneceDoc) getVersionbyID(ID int) (version int) {
 	json.Unmarshal([]byte(body), &cp)
 	version = cp.Version.Number
 	return version
+}
+
+func (c ConfluneceDoc) getBodybyID(ID int) (bod string) {
+
+	if ID == 0 {
+		return
+	}
+
+	url := fmt.Sprintf("https://tafmobile.atlassian.net/wiki/rest/api/content/%d?expand=body.storage", ID)
+	method := "GET"
+	// fmt.Println(url) // debug line
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, nil)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Basic "+key)
+	req.Header.Add("Cookie", "JSESSIONID=BEBEEA2BBE754C2EE6163D7E95A71B6E; atlassian.xsrf.token=B0YG-UIL8-KTON-RQPS_d1725762d46de319d4d08160cafa0cae140fa2ed_lout")
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	// fmt.Println(string(body)) // debug line
+	var cp ConfluneceDoc
+	json.Unmarshal([]byte(body), &cp)
+	bod = cp.Body.Storage.Value
+	return bod
+}
+
+func (c ConfluneceDoc) getJsonbyID(ID int) (josn []byte) {
+
+	if ID == 0 {
+		return
+	}
+
+	url := fmt.Sprintf("https://tafmobile.atlassian.net/wiki/rest/api/content/%d?expand=body.storage", ID)
+	method := "GET"
+	// fmt.Println(url) // debug line
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, nil)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Basic "+key)
+	req.Header.Add("Cookie", "JSESSIONID=BEBEEA2BBE754C2EE6163D7E95A71B6E; atlassian.xsrf.token=B0YG-UIL8-KTON-RQPS_d1725762d46de319d4d08160cafa0cae140fa2ed_lout")
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	// fmt.Println(string(body)) // debug line
+	// var cp ConfluneceDoc
+	// json.Unmarshal([]byte(body), &cp)
+	josn = []byte(body)
+	return josn
 }
