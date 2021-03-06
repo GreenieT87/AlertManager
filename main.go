@@ -15,22 +15,8 @@ var logpath string = "./STUFF/"
 var basepath string = "./alerts/"
 var meta metaData
 var config conf
+var conflunece ConfluneceDoc
 var now string = time.Now().Format("2006-01-02 15:04:05")
-
-// MetaData holds meta informatiob about an alert. For internal processing only. Data gets persisted in .meta.yml
-
-type conf struct {
-	Conflunece struct {
-		ConfluenceAPIKey   string `yaml:"confluence_api_key,omitempty"`
-		ConfluenceSpaceKey string `yaml:"confluence_space_key,omitempty"`
-		ConfluenceDomain   string `yaml:"confluence_domain,omitempty"`
-		ModTime            string `yaml:"mod_time,omitempty"`
-	} `yaml:"conflunece,omitempty"`
-	Grafana struct {
-		GrafanaDomain string `yaml:"grafana_domain,omitempty"`
-		GrafanaAPIKey string `yaml:"grafama_api_key,omitempty"`
-	} `yaml:"grafana,omitempty"`
-}
 
 // Logger provides a simple log interface. It logs to file `log.log`,
 // on ERROR it exits after printing the provided message
@@ -67,6 +53,7 @@ func init() {
 
 func main() {
 	groups, _ := ioutil.ReadDir(basepath)
+	var conf conf
 	for _, g := range groups {
 		if g.IsDir() {
 			fmt.Println("Group:" + g.Name())
@@ -74,16 +61,24 @@ func main() {
 			for _, a := range alerts {
 				if a.IsDir() {
 					metapath := path.Join(basepath, g.Name(), a.Name()) + "/.meta.yml"
-					if meta.getCreated(metapath) == "" {
-						meta.setCreated(metapath)
-					}
-					meta.setModTime(metapath)
-					fmt.Println(path.Join("Alert: " + a.Name()))
-					fmt.Printf("Version: %v\n", meta.getVersion(path.Join(basepath, g.Name(), a.Name())+"/.meta.yml"))
+					var domain string = conf.getConfluenceDomain()
+					url := fmt.Sprintf("%v/wiki/rest/api/content/%d?expand=version.number", domain, meta.getConfDocID(metapath))
+					fmt.Println(url)
 				}
 			}
 		}
 	}
+	// conflunece.update()
+
+	// var domain = conf.getConfluenceDomain
+	// var docID = meta.getConfDocID
+	// fmt.Printf("%v/wiki/rest/api/content/%d?expand=version.number", conf.getConfluenceDomain(), meta.getConfDocID())
+
+	// url := "https://tafmobile.atlassian.net/wiki/rest/api/content/2388721698?expand=version.number,body.storage,space"
+
+	x0 := conflunece.getVersionbyID(2388721698)
+	var ver = x0
+	fmt.Printf("version %d", ver)
 
 	// Logger("ERROR", "BLA")
 	// fmt.Println(meta.getVersion("STUFF/meta.yml"))

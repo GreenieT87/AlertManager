@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -15,6 +16,7 @@ type metaData struct {
 	Groupname string
 	ModTime   string
 	Created   string
+	ConfDocID int
 }
 
 func getMetaData(filename string) (*metaData, error) {
@@ -67,6 +69,13 @@ func (m metaData) getCreated(metapath string) (created string) {
 	}
 	return md.Created
 }
+func (m metaData) getConfDocID(metapath string) (confdocid int) {
+	md, err := getMetaData(metapath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return md.ConfDocID
+}
 
 // updateVersion can be used to set a version number
 // or by giving `0` as version it autoincrements
@@ -80,6 +89,7 @@ func (m metaData) updateVersion(filename string, version int64) {
 		Groupname: meta.getAlertGroupName(filename),
 		ModTime:   meta.getModTime(filename),
 		Created:   meta.getCreated(filename),
+		ConfDocID: meta.getConfDocID(filename),
 	}
 	file, _ := yaml.Marshal(data)
 	_ = ioutil.WriteFile(filename, file, 0666)
@@ -91,6 +101,7 @@ func (m metaData) setAlertName(filename string, alertname string) {
 		Groupname: meta.getAlertGroupName(filename),
 		ModTime:   meta.getModTime(filename),
 		Created:   meta.getCreated(filename),
+		ConfDocID: meta.getConfDocID(filename),
 	}
 	file, _ := yaml.Marshal(data)
 	_ = ioutil.WriteFile(filename, file, 0666)
@@ -102,11 +113,11 @@ func (m metaData) setAlertGroupName(filename string, alertgroupname string) {
 		Groupname: alertgroupname,
 		ModTime:   meta.getModTime(filename),
 		Created:   meta.getCreated(filename),
+		ConfDocID: meta.getConfDocID(filename),
 	}
 	file, _ := yaml.Marshal(data)
 	_ = ioutil.WriteFile(filename, file, 0666)
 }
-
 func (m metaData) setModTime(filename string) {
 	data := metaData{
 		Version:   meta.getVersion(filename),
@@ -114,11 +125,11 @@ func (m metaData) setModTime(filename string) {
 		Groupname: meta.getAlertGroupName(filename),
 		ModTime:   now,
 		Created:   meta.getCreated(filename),
+		ConfDocID: meta.getConfDocID(filename),
 	}
 	file, _ := yaml.Marshal(data)
 	_ = ioutil.WriteFile(filename, file, 0666)
 }
-
 func (m metaData) setCreated(filename string) {
 	data := metaData{
 		Version:   meta.getVersion(filename),
@@ -126,6 +137,19 @@ func (m metaData) setCreated(filename string) {
 		Groupname: meta.getAlertGroupName(filename),
 		ModTime:   now,
 		Created:   now,
+		ConfDocID: meta.getConfDocID(filename),
+	}
+	file, _ := yaml.Marshal(data)
+	_ = ioutil.WriteFile(filename, file, 0666)
+}
+func (m metaData) setConfDocID(filename string, confdocid int) {
+	data := metaData{
+		Version:   meta.getVersion(filename),
+		Alertname: meta.getAlertname(filename),
+		Groupname: meta.getAlertGroupName(filename),
+		ModTime:   time.Now().Format("2006-01-02 15:04:05"),
+		Created:   meta.getCreated(filename),
+		ConfDocID: confdocid,
 	}
 	file, _ := yaml.Marshal(data)
 	_ = ioutil.WriteFile(filename, file, 0666)

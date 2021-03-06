@@ -8,6 +8,19 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type conf struct {
+	Conflunece struct {
+		ConfluenceAPIKey   string `yaml:"confluence_api_key,omitempty"`
+		ConfluenceSpaceKey string `yaml:"confluence_space_key,omitempty"`
+		ConfluenceDomain   string `yaml:"confluence_domain,omitempty"`
+		ModTime            string `yaml:"mod_time,omitempty"`
+	} `yaml:"conflunece,omitempty"`
+	Grafana struct {
+		GrafanaDomain string `yaml:"grafana_domain,omitempty"`
+		GrafanaAPIKey string `yaml:"grafama_api_key,omitempty"`
+	} `yaml:"grafana,omitempty"`
+}
+
 func getConf(filename string) (*conf, error) {
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
