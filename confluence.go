@@ -144,7 +144,7 @@ func (c ConfluneceDoc) update() {
 		return
 	}
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Basic dC5ncnVlbkB0YWZtb2JpbGUuZGU6dlRzTWJEdW5mSEQwMUdMVHhEQjhGNTNE")
+	req.Header.Add("Authorization", "Basic "+key)
 	req.Header.Add("Cookie", "JSESSIONID=BEBEEA2BBE754C2EE6163D7E95A71B6E; atlassian.xsrf.token=B0YG-UIL8-KTON-RQPS_d1725762d46de319d4d08160cafa0cae140fa2ed_lout")
 
 	res, err := client.Do(req)
