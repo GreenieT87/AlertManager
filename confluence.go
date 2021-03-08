@@ -284,3 +284,34 @@ func (c ConfluneceDoc) getJsonbyID(ID int) (josn []byte) {
 	josn = []byte(body)
 	return josn
 }
+
+func (c ConfluneceDoc) getVersionnByName() {
+
+	url := "https://tafmobile.atlassian.net/wiki/rest/api/content?type=page&spaceKey=BET&title=PostgresqlDown&expand=version.number"
+	method := "GET"
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, nil)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Basic "+key)
+	req.Header.Add("Cookie", "atlassian.xsrf.token=B0YG-UIL8-KTON-RQPS_b2b861bce7ffce17bae836ee9835d08c64571b52_lout")
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(string(body))
+}

@@ -1,0 +1,29 @@
+groups:
+- name: general
+  rules:
+  - alert: asdsad
+    expr: pg_up == 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Postgresql down (instance {{ $labels.instance }})"
+      description: "Postgresql instance is down\n VALUE = {{ $value }}\n LABELS: {{ $labels }}"
+- name: postgres
+  rules:
+  - alert: PostgresqlDown
+    expr: pg_up == 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Postgresql down (instance {{ $labels.instance }})"
+      description: "Postgresql instance is down\n VALUE = {{ $value }}\n LABELS: {{ $labels }}"
+  - alert: PostgresqlTEST
+    expr: pg_up == 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Postgresql down (instance {{ $labels.instance }})"
+      description: "Postgresql instance is down\n VALUE = {{ $value }}\n LABELS: {{ $labels }}"

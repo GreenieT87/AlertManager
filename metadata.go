@@ -87,7 +87,7 @@ func (m metaData) updateVersion(filename string, version int) {
 		Version:   version,
 		Alertname: meta.getAlertname(filename),
 		Groupname: meta.getAlertGroupName(filename),
-		ModTime:   meta.getModTime(filename),
+		ModTime:   time.Now().Format("2006-01-02 15:04"),
 		Created:   meta.getCreated(filename),
 		ConfDocID: meta.getConfDocID(filename),
 	}
@@ -99,7 +99,7 @@ func (m metaData) setAlertName(filename string, alertname string) {
 		Version:   meta.getVersion(filename),
 		Alertname: alertname,
 		Groupname: meta.getAlertGroupName(filename),
-		ModTime:   meta.getModTime(filename),
+		ModTime:   time.Now().Format("2006-01-02 15:04"),
 		Created:   meta.getCreated(filename),
 		ConfDocID: meta.getConfDocID(filename),
 	}
@@ -111,7 +111,7 @@ func (m metaData) setAlertGroupName(filename string, alertgroupname string) {
 		Version:   meta.getVersion(filename),
 		Alertname: meta.getAlertname(filename),
 		Groupname: alertgroupname,
-		ModTime:   meta.getModTime(filename),
+		ModTime:   time.Now().Format("2006-01-02 15:04"),
 		Created:   meta.getCreated(filename),
 		ConfDocID: meta.getConfDocID(filename),
 	}
@@ -123,7 +123,7 @@ func (m metaData) setModTime(filename string) {
 		Version:   meta.getVersion(filename),
 		Alertname: meta.getAlertname(filename),
 		Groupname: meta.getAlertGroupName(filename),
-		ModTime:   now,
+		ModTime:   time.Now().Format("2006-01-02 15:04"),
 		Created:   meta.getCreated(filename),
 		ConfDocID: meta.getConfDocID(filename),
 	}
@@ -135,8 +135,8 @@ func (m metaData) setCreated(filename string) {
 		Version:   meta.getVersion(filename),
 		Alertname: meta.getAlertname(filename),
 		Groupname: meta.getAlertGroupName(filename),
-		ModTime:   now,
-		Created:   now,
+		ModTime:   time.Now().Format("2006-01-02 15:04"),
+		Created:   time.Now().Format("2006-01-02 15:04"),
 		ConfDocID: meta.getConfDocID(filename),
 	}
 	file, _ := yaml.Marshal(data)
@@ -147,7 +147,7 @@ func (m metaData) setConfDocID(filename string, confdocid int) {
 		Version:   meta.getVersion(filename),
 		Alertname: meta.getAlertname(filename),
 		Groupname: meta.getAlertGroupName(filename),
-		ModTime:   time.Now().Format("2006-01-02 15:04:05"),
+		ModTime:   time.Now().Format("2006-01-02 15:04"),
 		Created:   meta.getCreated(filename),
 		ConfDocID: confdocid,
 	}
